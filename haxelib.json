@@ -1,0 +1,11 @@
+{
+  "name": "pilot.cargo",
+  "license": "MIT",
+  "classPath": "src",
+  "dependencies": {
+    "tink_state": ""
+  },
+  "contributors": [ "wartman" ],
+  "releasenote": "",
+  "version": "0.0.0"
+}

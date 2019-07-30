@@ -25,6 +25,7 @@ class App extends ReactiveWidget {
           } 
         }) else null,
         VNode.h('h1', {}, [ store.title ]),
+        VNode.h('span', {}, [ '${store.remainingTasks} of ${store.totalTasks} remaining' ]),
         new Button({
           onClick: _ -> store.addingTask = true,
           children: [ 'Add task' ]

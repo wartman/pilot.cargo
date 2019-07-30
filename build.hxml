@@ -6,5 +6,8 @@
 -lib pilot.wings
 -lib tink_state
 
+-dce full
+-D analyzer-optimize
+
 -main TaskApp
 -js dist/assets/app.js
