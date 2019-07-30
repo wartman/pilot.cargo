@@ -1,0 +1,10 @@
+-cp src
+-cp test
+-cp example
+
+-lib pilot
+-lib pilot.wings
+-lib tink_state
+
+-main TaskApp
+-js dist/assets/app.js
