@@ -37,9 +37,9 @@ abstract TaskItem(VNode) to VNode {
           content: props.task.content,
           title: props.task.title,
           requestClose: () -> props.task.editing = false,
-          save: value -> {
+          save: (data) -> {
             props.task.editing = false;
-            props.task.update(props.task.title, value);
+            props.task.update(data.title, data.content);
           }
         }) else null
       ]

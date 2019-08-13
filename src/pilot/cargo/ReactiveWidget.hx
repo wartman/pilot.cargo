@@ -23,7 +23,9 @@ class ReactiveWidget implements Widget {
     if (_pilot_observable == null) {
       _pilot_observable = Observable.auto(build);
       _pilot_vnode = _pilot_observable.value;
+      var detach = _pilot_vnode.hooks.detach;
       _pilot_vnode.hooks.detach = () -> {
+        if (detach != null) detach();
         _pilot_link.dissolve();
         _pilot_vnode = null;
         _pilot_observable = null;

@@ -2,6 +2,7 @@ package task.ui.core;
 
 import pilot.VNode;
 import pilot.wings.*;
+import pilot.wings.PortalTarget;
 import pilot.cargo.ReactiveWidget;
 import task.data.*;
 import task.ui.task.*;
@@ -13,14 +14,14 @@ class App extends ReactiveWidget {
   override function build():VNode {
     return new Box({
       children: [
-        new PortalTarget({ id: 'default' }),
+        new PortalTarget({ id: new PortalTargetId('default') }),
         if (store.addingTask) new TaskEditor({
           requestClose: () -> store.addingTask = false,
-          save: value -> {
+          save: (props) -> {
             store.addingTask = false;
             store.addTask(new Task({
-              title: 'To do',
-              content: value
+              title: props.title,
+              content: props.content
             }));
           } 
         }) else null,
