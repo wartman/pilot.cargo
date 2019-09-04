@@ -1,4 +1,4 @@
 -D pilot=0.0.0
-# @install: lix --silent download "gh://github.com/wartman/pilot#8518b5cc3ab66086080af349637c0e263d976a37" into pilot/0.0.0/github/8518b5cc3ab66086080af349637c0e263d976a37
--cp ${HAXE_LIBCACHE}/pilot/0.0.0/github/8518b5cc3ab66086080af349637c0e263d976a37/src
+# @install: lix --silent download "gh://github.com/wartman/pilot#fbf4909dd6881e087b423cbecdf57b044c833365" into pilot/0.0.0/github/fbf4909dd6881e087b423cbecdf57b044c833365
+-cp ${HAXE_LIBCACHE}/pilot/0.0.0/github/fbf4909dd6881e087b423cbecdf57b044c833365/src
 --macro pilot.macro.StyleBuilder.use()
