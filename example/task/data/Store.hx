@@ -4,7 +4,7 @@ import pilot.cargo.Model;
 
 class Store implements Model {
   
-  @:prop var title:String;
+  @:prop(constant = true) var title:String;
   @:prop(mutable = true) @:optional var subTitle:String;
   @:prop var tasks:Array<Task>;
   @:prop(mutable = true) var addingTask:Bool = false;

@@ -8,6 +8,7 @@
 
 -dce full
 -D analyzer-optimize
+# -D pilot-cargo-constant
 
 -main TaskApp
 -js dist/assets/app.js

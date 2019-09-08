@@ -17,6 +17,7 @@ class ModelBuilder {
   // Check the `coconut.data` project and use that as the basis for this
   // implementation going forward.
   public static function build() {
+    var isConstantTarget = Context.defined('pilot-cargo-constant');
     var fields = Context.getBuildFields();
     var props:Array<Field> = [];
     var conFields:Array<Field> = [];
@@ -39,6 +40,7 @@ class ModelBuilder {
           Context.error('An explicit type is required', f.pos);
         } else {
           var mutable = false;
+          var isConstant = false;
           var meta = f.meta.find(m -> propsMeta.has(m.name));
           for (p in meta.params) switch p {
             case macro $option = $value: switch option.expr {
@@ -48,8 +50,13 @@ class ModelBuilder {
                   case macro true: mutable = true;
                   default: Context.error('`mutable` must be Bool', value.pos);
                 }
+                case 'constant': switch value {
+                  case macro false: isConstant = false;
+                  case macro true: isConstant = true;
+                  default: Context.error('`constant` must be Bool', value.pos);
+                }
                 default:
-                  Context.error('Currently only `mutable` is allowed here', option.pos);
+                  Context.error('Currently only `mutable` or `constant` is allowed here', option.pos);
               }
               default:
                 Context.error('Only a = b expressions allowed here', p.pos);
@@ -64,30 +71,57 @@ class ModelBuilder {
           var isOptional = f.meta.exists(m -> m.name == ':optional');
           var getName = 'get_${name}';
 
-          if (e != null) {
-            initializers.push(macro _pilot_props.$name = props.$name == null ? new tink.state.State($e) : new tink.state.State(props.$name));
-          } else if (isOptional) {
-            initializers.push(macro _pilot_props.$name = props.$name == null ? new tink.state.State(null) : new tink.state.State(props.$name));
+          if (isConstant || isConstantTarget) {
+            if (e != null) {
+              initializers.push(macro _pilot_props.$name = props.$name == null ? $e : props.$name);
+            } else {
+              initializers.push(macro _pilot_props.$name = props.$name);
+            }
           } else {
-            initializers.push(macro _pilot_props.$name = new tink.state.State(props.$name));
+            if (e != null) {
+              initializers.push(macro _pilot_props.$name = props.$name == null ? new tink.state.State($e) : new tink.state.State(props.$name));
+            } else if (isOptional) {
+              initializers.push(macro _pilot_props.$name = props.$name == null ? new tink.state.State(null) : new tink.state.State(props.$name));
+            } else {
+              initializers.push(macro _pilot_props.$name = new tink.state.State(props.$name));
+            }
           }
 
-          props.push(mk(name, macro:tink.state.State<$t>, isOptional));
+          if (isConstant || isConstantTarget) {
+            props.push(mk(name, t, isOptional));
+            newFields = newFields.concat((macro class {
+              @:noCompletion function $getName():$t return _pilot_props.$name;
+            }).fields);
+          } else {
+            props.push(mk(name, macro:tink.state.State<$t>, isOptional));
+            newFields = newFields.concat((macro class {
+              @:noCompletion function $getName():$t return _pilot_props.$name.value;
+            }).fields);
+          }
           conFields.push(mk(name, t, isOptional || e != null));
-          patchFields.push(mk(name, t, true));
-
-          newFields = newFields.concat((macro class {
-            @:noCompletion function $getName():$t return _pilot_props.$name.value;
-          }).fields);
+          if (!isConstant) patchFields.push(mk(name, t, true));
 
           if (mutable) {
-            var setName = 'set_${name}';
-            newFields = newFields.concat((macro class {
-              @:noCompletion function $setName(value:$t):$t {
-                _pilot_props.$name.set(value);
-                return value; 
+            if (isConstant) {
+              Context.error('Constant props cannot be mutable', f.pos);
+            } else {
+              var setName = 'set_${name}';
+              if (isConstantTarget) {
+                newFields = newFields.concat((macro class {
+                  @:noCompletion function $setName(value:$t):$t {
+                    _pilot_props.$name = value;
+                    return value; 
+                  }
+                }).fields);
+              } else {
+                newFields = newFields.concat((macro class {
+                  @:noCompletion function $setName(value:$t):$t {
+                    _pilot_props.$name.set(value);
+                    return value; 
+                  }
+                }).fields);
               }
-            }).fields);
+            }
           }
         }
       
@@ -105,12 +139,19 @@ class ModelBuilder {
           var getName = 'get_${name}';
           var initializer = macro @:pos(e.pos) function ():$t return ${e};
           
-          props.push(mk(name, macro:tink.state.Observable<$t>, true));
-          initializers.push(macro _pilot_props.$name = tink.state.Observable.auto(${initializer}));
-
-          newFields = newFields.concat((macro class {
-            @:noCompletion function $getName():$t return _pilot_props.$name.value;
-          }).fields);
+          if (isConstantTarget) {
+            props.push(mk(name, t, true));
+            lateInitializers.push(macro _pilot_props.$name = ${initializer}());
+            newFields = newFields.concat((macro class {
+              @:noCompletion function $getName():$t return _pilot_props.$name;
+            }).fields);
+          } else {
+            props.push(mk(name, macro:tink.state.Observable<$t>, true));
+            initializers.push(macro _pilot_props.$name = tink.state.Observable.auto(${initializer}));
+            newFields = newFields.concat((macro class {
+              @:noCompletion function $getName():$t return _pilot_props.$name.value;
+            }).fields);
+          }
         }
         
       case FFun(func):
@@ -161,7 +202,11 @@ class ModelBuilder {
     var updates:Array<Expr> = [];
     for (f in patchFields) {
       var name = f.name;
-      updates.push(macro if (delta.$name != null) _pilot_props.$name.set(delta.$name));
+      if (isConstantTarget) {
+        updates.push(macro if (delta.$name != null) _pilot_props.$name = delta.$name);
+      } else {
+        updates.push(macro if (delta.$name != null) _pilot_props.$name.set(delta.$name));
+      }
     }
 
     newFields = newFields.concat((macro class {
