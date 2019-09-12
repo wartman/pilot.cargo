@@ -5,6 +5,7 @@ import haxe.macro.Expr;
 import haxe.macro.Context;
 
 using Lambda;
+using haxe.macro.Tools;
 
 class ModelBuilder {
 
@@ -17,13 +18,15 @@ class ModelBuilder {
   // Check the `coconut.data` project and use that as the basis for this
   // implementation going forward.
   public static function build() {
+    var cls = Context.getLocalClass().get();
     var isConstantTarget = Context.defined('pilot-cargo-constant');
     var fields = Context.getBuildFields();
     var props:Array<Field> = [];
     var conFields:Array<Field> = [];
     var patchFields:Array<Field> = [];
+    var jsonFields:Array<ObjectField> = [];
     var newFields:Array<Field> = [];
-    var initializers:Array<Expr> = [];
+    var initializers:Array<ObjectField> = [];
     var lateInitializers:Array<Expr> = [];
 
     function mk(name:String, t:ComplexType, isOptional:Bool):Field return {
@@ -73,17 +76,32 @@ class ModelBuilder {
 
           if (isConstant || isConstantTarget) {
             if (e != null) {
-              initializers.push(macro _pilot_props.$name = props.$name == null ? $e : props.$name);
+              initializers.push({
+                field: name,
+                expr: macro @:pos(f.pos) props.$name == null ? $e : props.$name,
+              });
             } else {
-              initializers.push(macro _pilot_props.$name = props.$name);
+              initializers.push({
+                field: name,
+                expr: macro props.$name
+              });
             }
           } else {
             if (e != null) {
-              initializers.push(macro _pilot_props.$name = props.$name == null ? new tink.state.State($e) : new tink.state.State(props.$name));
+              initializers.push({
+                field: name,
+                expr: macro props.$name == null ? new tink.state.State($e) : new tink.state.State(props.$name)
+              });
             } else if (isOptional) {
-              initializers.push(macro _pilot_props.$name = props.$name == null ? new tink.state.State(null) : new tink.state.State(props.$name));
+              initializers.push({
+                field: name,
+                expr: macro props.$name == null ? new tink.state.State(null) : new tink.state.State(props.$name)
+              });
             } else {
-              initializers.push(macro _pilot_props.$name = new tink.state.State(props.$name));
+              initializers.push({
+                field: name,
+                expr: macro new tink.state.State(props.$name)
+              });
             }
           }
 
@@ -123,6 +141,24 @@ class ModelBuilder {
               }
             }
           }
+
+          switch t {
+            case macro:Array<$t> if (t.toType().unify(Context.getType('pilot.cargo.Model'))):
+              jsonFields.push({
+                field: name,
+                expr: macro this.$name.map(i -> i.toJson())
+              });
+            case t if (t.toType().unify(Context.getType('pilot.cargo.Model'))):
+              jsonFields.push({
+                field: name,
+                expr: macro this.$name.toJson()
+              });
+            default:
+              jsonFields.push({
+                field: name,
+                expr: macro this.$name
+              });
+          }
         }
       
       case FVar(t, e) if (f.meta.exists(m -> computedMeta.has(m.name))):
@@ -147,7 +183,10 @@ class ModelBuilder {
             }).fields);
           } else {
             props.push(mk(name, macro:tink.state.Observable<$t>, true));
-            initializers.push(macro _pilot_props.$name = tink.state.Observable.auto(${initializer}));
+            initializers.push({
+              field: name,
+              expr: macro tink.state.Observable.auto(${initializer})
+            });
             newFields = newFields.concat((macro class {
               @:noCompletion function $getName():$t return _pilot_props.$name.value;
             }).fields);
@@ -158,7 +197,7 @@ class ModelBuilder {
         
         if (f.meta.exists(m -> m.name == ':init')) {
           var name = f.name;
-          initializers.push(macro this.$name());
+          lateInitializers.push(macro this.$name());
         }
 
       default:
@@ -214,8 +253,10 @@ class ModelBuilder {
       var _pilot_props:$propsVar;
 
       public function new(props:$conArg) {
-        _pilot_props = cast {};
-        $b{initializers};
+        _pilot_props = ${ {
+          expr: EObjectDecl(initializers),
+          pos: cls.pos
+        } };
         $b{lateInitializers};
       }
 
@@ -229,6 +270,13 @@ class ModelBuilder {
 
         var delta:$sparse = cast sparse;
         $b{updates};
+      }
+
+      public function toJson():{} {
+        return ${ {
+          expr: EObjectDecl(jsonFields),
+          pos: Context.currentPos()
+        } };
       }
 
       // public function toObject():$patch {

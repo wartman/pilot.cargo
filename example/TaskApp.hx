@@ -2,6 +2,7 @@ import task.data.*;
 import task.ui.core.App;
 
 using pilot.Differ;
+using haxe.Json;
 
 class TaskApp {
 
@@ -10,6 +11,11 @@ class TaskApp {
       title: 'Tasks',
       tasks: [ new Task({ title: 'foo', content: 'Must foo' }) ]
     });
+
+    // This is here just for testing until I get off my butt and
+    // make real tests
+    trace(store.toJson().stringify(null, '  '));
+
     var app = new App({ store: store });
     js.Browser.document.getElementById('root').patch(app);
   }

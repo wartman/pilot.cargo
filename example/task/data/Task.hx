@@ -9,6 +9,10 @@ class Task implements Model {
   @:prop(mutable = true) var completed:Bool = false;
   @:prop(mutable = true) var editing:Bool = false;
 
+  // This is here because I'm testing `toJson` and desperately
+  // need a real test unit.
+  @:prop var test:Test = new Test({ hm: 'foo' });
+
   @:transition
   public function update(title:String, content:String) {
     return { 
@@ -18,4 +22,9 @@ class Task implements Model {
     };
   }
 
+}
+
+// Todo: remove and add real tests
+class Test implements Model {
+  @:prop var hm:String;
 }
