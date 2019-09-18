@@ -19,12 +19,14 @@ class ModelBuilder {
   // implementation going forward.
   public static function build() {
     var cls = Context.getLocalClass().get();
+    var typePath:TypePath = { pack: cls.pack, name: cls.name };
     var isConstantTarget = Context.defined('pilot-cargo-constant');
     var fields = Context.getBuildFields();
     var props:Array<Field> = [];
     var conFields:Array<Field> = [];
     var patchFields:Array<Field> = [];
     var jsonFields:Array<ObjectField> = [];
+    var fromJsonFields:Array<ObjectField> = [];
     var newFields:Array<Field> = [];
     var initializers:Array<ObjectField> = [];
     var lateInitializers:Array<Expr> = [];
@@ -144,19 +146,43 @@ class ModelBuilder {
 
           switch t {
             case macro:Array<$t> if (t.toType().unify(Context.getType('pilot.cargo.Model'))):
+              var cls = t.toType().getClass();
+              var path = cls.pack.concat([ cls.name ]);
               jsonFields.push({
                 field: name,
-                expr: macro this.$name.map(i -> i.toJson())
+                expr: macro this.$name != null 
+                  ? this.$name.map(i -> i.toJson())
+                  : null
+              });
+              fromJsonFields.push({
+                field: name,
+                expr: macro props.$name != null
+                  ? (props.$name:Array<Dynamic>).map(props -> $p{path}.fromJson(props))
+                  : null
               });
             case t if (t.toType().unify(Context.getType('pilot.cargo.Model'))):
+              var cls = t.toType().getClass();
+              var path = cls.pack.concat([ cls.name ]);
               jsonFields.push({
                 field: name,
-                expr: macro this.$name.toJson()
+                expr: macro this.$name != null 
+                  ? this.$name.toJson()
+                  : null
+              });
+              fromJsonFields.push({
+                field: name,
+                expr: macro props.$name != null
+                  ? $p{path}.fromJson(props.$name)
+                  : null
               });
             default:
               jsonFields.push({
                 field: name,
                 expr: macro this.$name
+              });
+              fromJsonFields.push({
+                field: name,
+                expr: macro props.$name
               });
           }
         }
@@ -275,8 +301,15 @@ class ModelBuilder {
       public function toJson():{} {
         return ${ {
           expr: EObjectDecl(jsonFields),
-          pos: Context.currentPos()
+          pos: cls.pos
         } };
+      }
+
+      public static function fromJson(props:Dynamic) {
+        return new $typePath(${ {
+          expr: EObjectDecl(fromJsonFields),
+          pos: cls.pos
+        } });
       }
 
       // public function toObject():$patch {
