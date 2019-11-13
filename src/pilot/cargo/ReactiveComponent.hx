@@ -21,11 +21,11 @@ class ReactiveComponent extends Component {
       _pilot_setProperties(attrs, context);
       _pilot_observable = Observable.auto(render);
       if (_pilot_link != null) _pilot_link.dissolve();
-      _pilot_link = _pilot_observable.bind({ direct: true }, vn -> {
+      _pilot_link = _pilot_observable.bind({ direct: true }, rendered -> {
         if (_pilot_wire == null && componentShouldRender(attrs)) {
-          _pilot_doInitialRender(render(), context);
+          _pilot_doInitialRender(rendered, context);
         } else if (componentShouldRender(attrs)) {
-          _pilot_doDiffRender(render(), context);
+          _pilot_doDiffRender(rendered, context);
         }
       });
     }

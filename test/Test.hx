@@ -1,5 +1,4 @@
 import pilot.cargo.*;
-import pilot.Component;
 import pilot.Root;
 import pilot.Dom;
 
@@ -34,10 +33,14 @@ class TestComponent extends ReactiveComponent {
 
   @:attribute var model:TestModel;
   
-  override function render() return html(
+  override function render() return html(<>
+    <input type="text" value={model.title} onChange={e -> {
+      var value = e.target.value;
+      model.title = value;
+    }} />
     <div onClick={_ -> model.title = 'bar'}>
       {model.fullTitle}
     </div>
-  );
+  </>);
 
 }
