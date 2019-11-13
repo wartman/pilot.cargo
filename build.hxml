@@ -3,12 +3,12 @@
 -cp example
 
 -lib pilot
--lib pilot.wings
+# -lib pilot.wings
 -lib tink_state
 
 -dce full
 -D analyzer-optimize
 # -D pilot-cargo-constant
 
--main TaskApp
+-main Test
 -js dist/assets/app.js

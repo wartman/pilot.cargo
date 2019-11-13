@@ -1,15 +1,16 @@
-import pilot.*;
 import pilot.cargo.*;
-
-using pilot.Differ;
+import pilot.Component;
+import pilot.Root;
+import pilot.Dom;
 
 class Test {
 
   public static function main() {
     var model = new TestModel({ title: 'ok' });
-    var widget = new TestWidget({ model: model });
-    var node = js.Browser.document.getElementById('root');
-    node.patch(widget);
+    var root = new Root(Dom.getElementById('root'));
+    root.update(Pilot.html(<div>
+      <TestComponent model={model} />
+    </div>));
   }
 
 }
@@ -23,25 +24,38 @@ class TestModel implements Model {
 
   @:transition
   public function setTitle(title:String) {
+    trace('transition');
     return { title: title };
   }
 
 }
 
-class TestWidget extends ReactiveWidget {
+class TestComponent extends ReactiveComponent {
 
-  @:prop var model:TestModel;
-
-  override function build():VNode {
-    return new VNode({
-      name: 'div',
-      props: {
-        onClick: _ -> model.title = 'bar'
-      },
-      children: [
-        model.fullTitle
-      ]
-    });
-  }
+  @:attribute var model:TestModel;
+  
+  override function render() return html(
+    <div onClick={_ -> model.title = 'bar'}>
+      {model.fullTitle}
+    </div>
+  );
 
 }
+
+// class TestWidget extends ReactiveWidget {
+
+//   @:prop var model:TestModel;
+
+//   override function build():VNode {
+//     return new VNode({
+//       name: 'div',
+//       props: {
+//         onClick: _ -> model.title = 'bar'
+//       },
+//       children: [
+//         model.fullTitle
+//       ]
+//     });
+//   }
+
+// }
