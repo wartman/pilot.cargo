@@ -41,21 +41,3 @@ class TestComponent extends ReactiveComponent {
   );
 
 }
-
-// class TestWidget extends ReactiveWidget {
-
-//   @:prop var model:TestModel;
-
-//   override function build():VNode {
-//     return new VNode({
-//       name: 'div',
-//       props: {
-//         onClick: _ -> model.title = 'bar'
-//       },
-//       children: [
-//         model.fullTitle
-//       ]
-//     });
-//   }
-
-// }

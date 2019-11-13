@@ -8,7 +8,13 @@
 
 -dce full
 -D analyzer-optimize
-# -D pilot-cargo-constant
-
 -main Test
+
+--each
+
 -js dist/assets/app.js
+
+--next
+
+-D pilot-cargo-constant
+-php dist/php
