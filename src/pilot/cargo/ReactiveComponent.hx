@@ -19,6 +19,7 @@ class ReactiveComponent extends Component {
     override function _pilot_update(attrs:Dynamic, context:Context) {
       _pilot_context = context;
       _pilot_setProperties(attrs, context);
+      if (_pilot_wire == null) _pilot_doInits();
       _pilot_observable = Observable.auto(render);
       if (_pilot_link != null) _pilot_link.dissolve();
       _pilot_link = _pilot_observable.bind({ direct: true }, rendered -> {

@@ -9,6 +9,14 @@ class App extends ReactiveComponent {
 
   @:attribute var store:Store;
   
+  @:init function testInit() {
+    trace('Init was called on ReactiveComponent');
+  }
+
+  @:effect function testEffect() {
+    trace('Effect was called on ReactiveComponent');
+  }
+
   override function render() return html(<>
     <PortalTarget id={Config.modalTarget} />
     <if {store.addingTask}>
