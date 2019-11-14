@@ -1,7 +1,6 @@
 import task.data.*;
 import task.ui.core.App;
 
-using pilot.Differ;
 using haxe.Json;
 
 class TaskApp {
@@ -17,8 +16,10 @@ class TaskApp {
     trace(store.toJson().stringify(null, '  '));
     trace(Store.fromJson(store.toJson()));
 
-    var app = new App({ store: store });
-    js.Browser.document.getElementById('root').patch(app);
+    Pilot.mount(
+      Pilot.dom.getElementById('root'), 
+      Pilot.html(<App store={store} />)
+    );
   }
 
 }

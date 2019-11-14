@@ -16,9 +16,10 @@ class Task implements Model {
   @:transition
   public function update(title:String, content:String) {
     return { 
+      editing: false,
+      completed: false, 
       title: title,
-      content: content, 
-      completed: false 
+      content: content
     };
   }
 

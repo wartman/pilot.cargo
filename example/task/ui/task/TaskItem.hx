@@ -1,49 +1,41 @@
 package task.ui.task;
 
-import pilot.VNode;
-import pilot.wings.*;
+// import pilot.Component;
+import pilot.cargo.ReactiveComponent;
 import task.data.*;
 
-abstract TaskItem(VNode) to VNode {
+class TaskItem extends ReactiveComponent {
   
-  public inline function new(props:{
-    task:Task,
-    store:Store
-  }) {
-    this = new VNode({
-      name: 'li',
-      props: {},
-      children: [
-        VNode.h('h3', {}, [ props.task.title ]),
-        VNode.h('p', {}, [ props.task.content ]),
-        new Button({
-          onClick: _ -> props.task.completed = !props.task.completed,
-          children: [
-            if (props.task.completed)
-              'Mark Pending'
-            else
-              'Mark Completed'
-          ]
-        }),
-        new Button({
-          onClick: _ -> props.task.editing = true,
-          children: [ 'Edit' ]
-        }),
-        new Button({
-          onClick: _ -> props.store.removeTask(props.task),
-          children: [ 'Remove' ]
-        }),
-        if (props.task.editing) new TaskEditor({
-          content: props.task.content,
-          title: props.task.title,
-          requestClose: () -> props.task.editing = false,
-          save: (data) -> {
-            props.task.editing = false;
-            props.task.update(data.title, data.content);
-          }
-        }) else null
-      ]
-    });
-  }
+  @:attribute var task:Task;
+  @:attribute var store:Store;
 
+  override function render() return html(
+    <li>
+      <h3>{task.title}</h3>
+      <p>{task.content}</p>
+      <button onClick={_ -> task.completed = !task.completed}>
+        <if {task.completed}>Mark Pending<else>Mark Completed</if>
+      </button>
+      <button onClick={_ -> {
+        task.editing = true;
+      }}>
+        Edit
+      </button>
+      <button onClick={_ -> store.removeTask(task)}>
+        Remove
+      </button>
+      <if {task.editing}>
+        <TaskEditor
+          content={task.content}
+          title={task.title}
+          requestClose={() -> task.editing = false}
+          save={data -> {
+            task.editing = false;
+            task.update(data.title, data.content);
+          }}
+        />
+      </if>
+    </li>
+  );
+  
 }

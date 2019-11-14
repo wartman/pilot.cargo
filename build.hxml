@@ -1,14 +1,14 @@
 -cp src
--cp test
+# -cp test
 -cp example
 
 -lib pilot
-# -lib pilot.wings
+-lib pilot.wings
 -lib tink_state
 
 -dce full
 -D analyzer-optimize
--main Test
+-main TaskApp
 
 --each
 
@@ -17,4 +17,5 @@
 --next
 
 -D pilot-cargo-constant
+-D pilot-skip
 -php dist/php

@@ -1,15 +1,15 @@
 import pilot.cargo.*;
-import pilot.Root;
-import pilot.Dom;
 
 class Test {
 
   public static function main() {
     var model = new TestModel({ title: 'ok' });
-    var root = new Root(Dom.getElementById('root'));
-    root.update(Pilot.html(<div>
-      <TestComponent model={model} />
-    </div>));
+    Pilot.mount(
+      Pilot.dom.getElementById('root'),
+      Pilot.html(<div>
+        <TestComponent model={model} />
+      </div>)
+    );
   }
 
 }
