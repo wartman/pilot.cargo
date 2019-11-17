@@ -1,5 +1,6 @@
 import task.data.*;
 import task.ui.core.App;
+import pilot.wings.PortalProvider;
 
 using haxe.Json;
 
@@ -17,8 +18,14 @@ class TaskApp {
     trace(Store.fromJson(store.toJson()));
 
     Pilot.mount(
-      Pilot.dom.getElementById('root'), 
-      Pilot.html(<App store={store} />)
+      Pilot.dom.getElementById('root'),
+      Pilot.html(
+        // Note: providers don't seem to work well
+        //       inside ReactiveComponents.
+        <PortalProvider>
+          <App store={store} />  
+        </PortalProvider>
+      )
     );
   }
 

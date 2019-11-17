@@ -2,7 +2,6 @@ package task.ui.task;
 
 import pilot.Component;
 import pilot.wings.*;
-import task.ui.core.Config;
 
 class TaskEditor extends Component {
   
@@ -21,7 +20,6 @@ class TaskEditor extends Component {
 
   override function render() return html(
     <Modal
-      target={Config.modalTarget}
       requestClose={requestClose}
       overlayStyle@style={
         background: rgba(0, 0, 0, 0.4);

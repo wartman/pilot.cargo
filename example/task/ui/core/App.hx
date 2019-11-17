@@ -1,6 +1,5 @@
 package task.ui.core;
 
-import pilot.wings.PortalTarget;
 import pilot.cargo.ReactiveComponent;
 import task.ui.task.*;
 import task.data.*;
@@ -18,7 +17,6 @@ class App extends ReactiveComponent {
   }
 
   override function render() return html(<>
-    <PortalTarget id={Config.modalTarget} />
     <if {store.addingTask}>
       <TaskEditor
         requestClose={() -> store.addingTask = false}
