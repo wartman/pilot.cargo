@@ -20,9 +20,6 @@ class Model {
   static final computedMeta = [ ':computed' ];
   static final optional = { name: ':optional', pos: (macro null).pos };
 
-  // This is a rather naive and questionable implementation.
-  // Check the `coconut.data` project and use that as the basis for this
-  // implementation going forward.
   public static function build() {
     var cls = Context.getLocalClass().get();
     var typePath:TypePath = { pack: cls.pack, name: cls.name };

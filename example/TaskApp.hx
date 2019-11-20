@@ -21,7 +21,7 @@ class TaskApp {
       Pilot.dom.getElementById('root'),
       Pilot.html(
         // Note: providers don't seem to work well
-        //       inside ReactiveComponents.
+        //       inside ReactiveComponents. Should work on that.
         <PortalProvider>
           <App store={store} />  
         </PortalProvider>
