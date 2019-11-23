@@ -3,8 +3,8 @@ package pilot.cargo;
 #if !pilot_cargo_constant
   import tink.core.Callback;
   import tink.state.Observable;
-  import pilot.core.Context;
-  import pilot.RenderResult;
+  import pilot.Context;
+  import pilot.VNode;
 #end
 import pilot.Component;
 
@@ -18,7 +18,7 @@ class ReactiveComponent extends Component {
     #end
 
     @:noCompletion var _pilot_link:CallbackLink;
-    @:noCompletion var _pilot_observable:Observable<RenderResult>;
+    @:noCompletion var _pilot_observable:Observable<VNode>;
 
     override function _pilot_update(attrs:Dynamic, context:Context) {
       #if (js && debug && !nodejs)
