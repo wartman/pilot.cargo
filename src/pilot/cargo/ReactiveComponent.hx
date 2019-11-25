@@ -42,10 +42,8 @@ class ReactiveComponent extends Component {
       _pilot_observable = Observable.auto(render);
       if (_pilot_link != null) _pilot_link.dissolve();
       _pilot_link = _pilot_observable.bind({ direct: true }, rendered -> {
-        if (_pilot_wire == null && _pilot_shouldRender(attrs)) {
-          _pilot_doInitialRender(rendered, context);
-        } else if (_pilot_shouldRender(attrs)) {
-          _pilot_doDiffRender(rendered, context);
+        if (_pilot_wire == null || _pilot_shouldRender(attrs)) {
+          _pilot_doRender(rendered, context);
         }
       });
     }

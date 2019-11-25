@@ -1,4 +1,3 @@
 -D pilot.wings=0.0.0
 # @install: lix --silent download "gh://github.com/wartman/pilot.wings#de06abefe7060c2d482f78f46ea1f06ab71f9fc8" into pilot.wings/0.0.0/github/de06abefe7060c2d482f78f46ea1f06ab71f9fc8
--lib pilot
 -cp ${HAXE_LIBCACHE}/pilot.wings/0.0.0/github/de06abefe7060c2d482f78f46ea1f06ab71f9fc8/src
