@@ -1,3 +1,9 @@
+<<<<<<< HEAD
 -D pilot=0.0.3
 # @install: lix --silent download "gh://github.com/wartman/pilot#28b5f1a4b341f2d5ea9f39713ae8f342a0052384" into pilot/0.0.3/github/28b5f1a4b341f2d5ea9f39713ae8f342a0052384
 -cp ${HAXE_LIBCACHE}/pilot/0.0.3/github/28b5f1a4b341f2d5ea9f39713ae8f342a0052384/src
+=======
+-D pilot=0.0.0
+# @install: lix --silent download "gh://github.com/wartman/pilot#76139cf877beb4a3a84e1d0e397d189c069fb182" into pilot/0.0.0/github/76139cf877beb4a3a84e1d0e397d189c069fb182
+-cp ${HAXE_LIBCACHE}/pilot/0.0.0/github/76139cf877beb4a3a84e1d0e397d189c069fb182/src
+>>>>>>> 349b24145d325027dce94a269325e1c7ef7cf045
