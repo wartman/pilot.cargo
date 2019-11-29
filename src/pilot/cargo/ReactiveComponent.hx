@@ -20,7 +20,7 @@ class ReactiveComponent extends Component {
     @:noCompletion var _pilot_link:CallbackLink;
     @:noCompletion var _pilot_observable:Observable<VNode>;
 
-    override function _pilot_update(attrs:Dynamic, context:Context) {
+    @:noCompletion override function _pilot_update(attrs:Dynamic, children:Array<VNode>, context:Context) {
       #if (js && debug && !nodejs)
         if (_pilot_context == null) {
           _pilot_context = context.copy();
@@ -37,20 +37,25 @@ class ReactiveComponent extends Component {
       #else
         _pilot_context = context;
       #end
-      _pilot_setProperties(attrs, context);
-      if (_pilot_wire == null) _pilot_doInits();
-      _pilot_observable = Observable.auto(render);
+      _pilot_updateAttributes(attrs, context);
+
+      if (!_pilot_initialized) {
+        _pilot_initialized = true;
+        _pilot_doInits();
+        _pilot_observable = Observable.auto(render);
+      }
       if (_pilot_link != null) _pilot_link.dissolve();
+      
       _pilot_link = _pilot_observable.bind({ direct: true }, rendered -> {
-        if (_pilot_wire == null && _pilot_shouldRender(attrs)) {
-          _pilot_doInitialRender(rendered, context);
-        } else if (_pilot_shouldRender(attrs)) {
-          _pilot_doDiffRender(rendered, context);
-        }
+        _pilot_updateChildren(switch rendered {
+          case VFragment(children): children;
+          case vn: [ vn ];
+        }, _pilot_context);
+        Util.later(_pilot_doEffects);
       });
     }
 
-    override function _pilot_dispose() {
+    @:noCompletion override function _pilot_dispose() {
       if (_pilot_link != null) _pilot_link.dissolve();
       _pilot_observable = null;
       super._pilot_dispose();
