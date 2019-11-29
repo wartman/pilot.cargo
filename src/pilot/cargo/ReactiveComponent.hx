@@ -47,17 +47,11 @@ class ReactiveComponent extends Component {
       if (_pilot_link != null) _pilot_link.dissolve();
       
       _pilot_link = _pilot_observable.bind({ direct: true }, rendered -> {
-<<<<<<< HEAD
         _pilot_updateChildren(switch rendered {
           case VFragment(children): children;
           case vn: [ vn ];
         }, _pilot_context);
         Util.later(_pilot_doEffects);
-=======
-        if (_pilot_wire == null || _pilot_shouldRender(attrs)) {
-          _pilot_doRender(rendered, context);
-        }
->>>>>>> 349b24145d325027dce94a269325e1c7ef7cf045
       });
     }
 
