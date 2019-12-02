@@ -301,7 +301,7 @@ class Model {
         $b{updates};
       }
 
-      public function toJson():{} {
+      public function toJson() {
         return ${ {
           expr: EObjectDecl(jsonFields),
           pos: cls.pos
