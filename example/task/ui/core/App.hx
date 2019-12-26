@@ -17,7 +17,7 @@ class App extends ReactiveComponent {
   }
 
   override function render() return html(<>
-    <if {store.addingTask}>
+    @if (store.addingTask) {
       <TaskEditor
         requestClose={() -> store.addingTask = false}
         save={data -> {
@@ -27,17 +27,17 @@ class App extends ReactiveComponent {
             content: data.content
           }));
         }}
-      />
-    </if>
+      />;
+    }
     <h1>{store.title}</h1>
     <span>{Std.string(store.remainingTasks)} of {Std.string(store.totalTasks)} remaining</span>
     <button
       onClick={() -> store.addingTask = true}
     >Add task</button>
     <ul>
-      <for {task in store.activeTasks}>
-        <TaskItem task={task} store={store} />
-      </for>
+      @for (task in store.activeTasks) {
+        <TaskItem task={task} store={store} />;
+      }
     </ul>
   </>);
 

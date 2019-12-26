@@ -18,7 +18,7 @@ class TaskApp {
     trace(Store.fromJson(store.toJson()));
 
     Pilot.mount(
-      Pilot.dom.getElementById('root'),
+      Pilot.document.getElementById('root'),
       Pilot.html(
         // Note: providers don't seem to work well
         //       inside ReactiveComponents. Should work on that.

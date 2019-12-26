@@ -18,5 +18,5 @@
 --next
 
 -D pilot-cargo-constant
--D pilot-skip
+-D pilot-css-skip
 -php dist/php

@@ -14,7 +14,7 @@ class TaskItem extends ReactiveComponent {
       <h3>{task.title}</h3>
       <p>{task.content}</p>
       <button onClick={_ -> task.completed = !task.completed}>
-        <if {task.completed}>Mark Pending<else>Mark Completed</if>
+        { if (task.completed) 'Mark Pending' else 'Mark Completed' }
       </button>
       <button onClick={_ -> {
         task.editing = true;
@@ -24,7 +24,7 @@ class TaskItem extends ReactiveComponent {
       <button onClick={_ -> store.removeTask(task)}>
         Remove
       </button>
-      <if {task.editing}>
+      @if (task.editing) {
         <TaskEditor
           content={task.content}
           title={task.title}
@@ -33,8 +33,8 @@ class TaskItem extends ReactiveComponent {
             task.editing = false;
             task.update(data.title, data.content);
           }}
-        />
-      </if>
+        />;
+      }
     </li>
   );
   

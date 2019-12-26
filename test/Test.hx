@@ -4,8 +4,9 @@ class Test {
 
   public static function main() {
     var model = new TestModel({ title: 'ok' });
+    trace(model.toJson());
     Pilot.mount(
-      Pilot.dom.getElementById('root'),
+      Pilot.document.getElementById('root'),
       Pilot.html(<div>
         <TestComponent model={model} />
       </div>)

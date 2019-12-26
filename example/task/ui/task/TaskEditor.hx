@@ -31,12 +31,16 @@ class TaskEditor extends Component {
     >
       <div>
         <input type="text" id="title" value={data.title} onChange={e -> {
-          var value = (e.target:js.html.InputElement).value;
-          data.title = value;
+          #if (js && !nodejs)
+            var value = (e.target:js.html.InputElement).value;
+            data.title = value;
+          #end
         }} />
         <textarea id="content" onChange={e -> {
-          var value = (e.target:js.html.TextAreaElement).value;
-          data.content = value;
+          #if (js && !nodejs)
+            var value = (e.target:js.html.TextAreaElement).value;
+            data.content = value;
+          #end
         }}>{data.content}</textarea>
         <button onClick={_ -> {
           save(data);
