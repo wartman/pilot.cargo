@@ -17,7 +17,7 @@ class Test {
 
 class TestModel implements Model {
 
-  @:prop(mutable = true) var title:String;
+  @:prop(mutable) var title:String;
   @:prop @:optional var foo:Array<String>;
 
   @:computed var fullTitle:String = 'foo ' + title;

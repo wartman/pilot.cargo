@@ -47,37 +47,32 @@ class Model {
         if (t == null) {
           Context.error('An explicit type is required', f.pos);
         } else {
+          var meta = f.meta.find(m -> propsMeta.has(m.name));
+          var name = f.name;
           var mutable = false;
           var isConstant = false;
-          var meta = f.meta.find(m -> propsMeta.has(m.name));
+          var isOptional = f.meta.exists(m -> m.name == ':optional');
+          var getName = 'get_${name}';
+
           for (p in meta.params) switch p {
-            case macro $option = $value: switch option.expr {
-              case EConst(CIdent(s)): switch s {
-                case 'mutable': switch value {
-                  case macro false: mutable = false;
-                  case macro true: mutable = true;
-                  default: Context.error('`mutable` must be Bool', value.pos);
-                }
-                case 'constant': switch value {
-                  case macro false: isConstant = false;
-                  case macro true: isConstant = true;
-                  default: Context.error('`constant` must be Bool', value.pos);
-                }
-                default:
-                  Context.error('Currently only `mutable` or `constant` is allowed here', option.pos);
-              }
-              default:
-                Context.error('Only a = b expressions allowed here', p.pos);
-            }
+            case (macro mutable) | (macro mutable = true):
+              mutable = true;
+            case macro mutable = false:
+              mutable = false;
+            case (macro constant) | (macro constant = true):
+              isConstant = true;
+            case macro constant = false:
+              isConstant = false;
+            case (macro optional) | (macro optional = true):
+              isOptional = true;
+            case macro optional = false:
+              isOptional = false;
             default:
-              Context.error('Only a = b expressions allowed here', meta.pos);
+              Context.error('Invalid `@:prop` option', meta.pos);
           }
 
           f.kind = FProp('get', mutable ? 'set' : 'never', t, null);
           f.access = [ APublic ];
-          var name = f.name;
-          var isOptional = f.meta.exists(m -> m.name == ':optional');
-          var getName = 'get_${name}';
 
           if (isConstant || isConstantTarget) {
             if (e != null) {
