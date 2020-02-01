@@ -17,14 +17,14 @@ class ReactiveComponent extends Component {
       static final BEING_OBSERVED = '_pilot_BEING_OBSERVED';
     #end
 
-    @:noCompletion var _pilot_link:CallbackLink;
-    @:noCompletion var _pilot_observable:Observable<VNode>;
+    @:noCompletion var __link:CallbackLink;
+    @:noCompletion var __observable:Observable<VNode>;
 
-    @:noCompletion override function _pilot_update(attrs:Dynamic, children:Array<VNode>, context:Context) {
+    @:noCompletion override function __update(attrs:Dynamic, children:Array<VNode>, context:Context) {
       #if (js && debug && !nodejs)
-        if (_pilot_context == null) {
-          _pilot_context = context.copy();
-          if (_pilot_context.get(BEING_OBSERVED) == true) {
+        if (__context == null) {
+          __context = context.copy();
+          if (__context.get(BEING_OBSERVED) == true) {
             js.Browser.window.console.warn(
               'A ReactiveComponent is being used inside another '
               + 'ReactiveComponent. Consider only using ReactiveComponents '
@@ -32,33 +32,33 @@ class ReactiveComponent extends Component {
               + 'render several times per Observable update.'
             );
           }
-          _pilot_context.set(BEING_OBSERVED, true);
+          __context.set(BEING_OBSERVED, true);
         }
       #else
-        _pilot_context = context;
+        __context = context;
       #end
-      _pilot_updateAttributes(attrs, context);
+      __updateAttributes(attrs, context);
 
-      if (!_pilot_initialized) {
-        _pilot_initialized = true;
-        _pilot_doInits();
-        _pilot_observable = Observable.auto(render);
+      if (!__initialized) {
+        __initialized = true;
+        __doInits();
+        __observable = Observable.auto(render);
       }
-      if (_pilot_link != null) _pilot_link.dissolve();
+      if (__link != null) __link.dissolve();
       
-      _pilot_link = _pilot_observable.bind({ direct: true }, rendered -> {
-        _pilot_updateChildren(switch rendered {
+      __link = __observable.bind({ direct: true }, rendered -> {
+        __updateChildren(switch rendered {
           case VFragment(children): children;
           case vn: [ vn ];
-        }, _pilot_context);
-        Util.later(_pilot_doEffects);
+        }, __context);
+        Util.later(__doEffects);
       });
     }
 
-    @:noCompletion override function _pilot_dispose() {
-      if (_pilot_link != null) _pilot_link.dissolve();
-      _pilot_observable = null;
-      super._pilot_dispose();
+    @:noCompletion override function __dispose() {
+      if (__link != null) __link.dissolve();
+      __observable = null;
+      super.__dispose();
     }
 
   #end
