@@ -47,11 +47,13 @@ class ReactiveComponent extends Component {
       if (__link != null) __link.dissolve();
       
       __link = __observable.bind({ direct: true }, rendered -> {
+        __cursor = new Cursor(__parent.__getReal(), __getFirstNode());
         __updateChildren(switch rendered {
           case VFragment(children): children;
           case vn: [ vn ];
         }, __context);
         Util.later(__doEffects);
+        __cursor = null;
       });
     }
 
