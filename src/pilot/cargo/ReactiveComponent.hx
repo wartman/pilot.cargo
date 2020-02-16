@@ -5,6 +5,7 @@ package pilot.cargo;
   import tink.state.Observable;
   import pilot.Context;
   import pilot.VNode;
+  import pilot.Later;
 #end
 import pilot.Component;
 
@@ -20,7 +21,16 @@ class ReactiveComponent extends Component {
     @:noCompletion var __link:CallbackLink;
     @:noCompletion var __observable:Observable<VNode>;
 
-    @:noCompletion override function __update(attrs:Dynamic, children:Array<VNode>, context:Context) {
+    @:noCompletion override function __update(
+      attrs:Dynamic, 
+      children:Array<VNode>, 
+      context:Context,
+      later:Later
+    ) {
+      if (!__alive) {
+        throw 'Cannot update a component that has not been inserted';
+      }
+      
       #if (js && debug && !nodejs)
         if (__context == null) {
           __context = context.copy();
@@ -46,15 +56,29 @@ class ReactiveComponent extends Component {
       }
       if (__link != null) __link.dissolve();
       
-      __link = __observable.bind({ direct: true }, rendered -> {
-        __cursor = new Cursor(__parent.__getReal(), __getFirstNode());
-        __updateChildren(switch rendered {
+      var currentRender:Bool = true;
+      __link = __observable.bind(rendered -> {
+        if (currentRender) {
+          currentRender = false;
+          return;
+        }
+        var later = new Later();
+        var cursor = __getCursor();
+        var previousLength = __nodes.length;
+        __nodes = __updateChildren(switch rendered {
           case VFragment(children): children;
           case vn: [ vn ];
-        }, __context);
-        Util.later(__doEffects);
-        __cursor = null;
+        }, __context, later);
+        __setChildren(__nodes, cursor, previousLength);
+        later.add(__doEffects);
+        later.dispatch();
       });
+
+      __nodes = __updateChildren(switch __observable.value {
+        case VFragment(children): children;
+        case vn: [ vn ];
+      }, __context, later);
+      later.add(__doEffects);
     }
 
     @:noCompletion override function __dispose() {

@@ -1,3 +1,3 @@
-# @install: lix --silent download "gh://github.com/wartman/pilot#4b775159ce6ff1fd93dc56d1ac7b8254c985def6" into pilot/0.2.0-alpha.1/github/4b775159ce6ff1fd93dc56d1ac7b8254c985def6
--cp ${HAXE_LIBCACHE}/pilot/0.2.0-alpha.1/github/4b775159ce6ff1fd93dc56d1ac7b8254c985def6/src
+# @install: lix --silent download "gh://github.com/wartman/pilot#72e57200d27a95b7985fe489c1eec9c58c4d8868" into pilot/0.2.0-alpha.1/github/72e57200d27a95b7985fe489c1eec9c58c4d8868
+-cp ${HAXE_LIBCACHE}/pilot/0.2.0-alpha.1/github/72e57200d27a95b7985fe489c1eec9c58c4d8868/src
 -D pilot=0.2.0-alpha.1

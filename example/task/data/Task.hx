@@ -6,8 +6,8 @@ class Task implements Model {
   
   @:prop var title:String;
   @:prop var content:String;
-  @:prop(mutable = true) var completed:Bool = false;
-  @:prop(mutable = true) var editing:Bool = false;
+  @:prop(mutable) var completed:Bool = false;
+  @:prop(mutable) var editing:Bool = false;
 
   // This is here because I'm testing `toJson` and desperately
   // need a real test unit.
