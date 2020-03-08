@@ -22,32 +22,44 @@ class TaskEditor extends Component {
   override function render() return html(
     <Modal
       requestClose={requestClose}
-      overlayStyle={css('
+      position={PositionCentered}
+      overlayStyle={ css('
         background: rgba(0, 0, 0, 0.4);
-      ')}
-      modalStyle={css('
+      ') }
+      modalStyle={ css('
         background: #ffffff;
         width: 70%;
-      ')}
+        padding: 20px;
+      ') }
     >
       <div>
-        <input type="text" id="title" value={data.title} onChange={e -> {
-          #if (js && !nodejs)
-            var value = (e.target:js.html.InputElement).value;
-            data.title = value;
-          #end
-        }} />
-        <textarea id="content" onChange={e -> {
-          #if (js && !nodejs)
-            var value = (e.target:js.html.TextAreaElement).value;
-            data.content = value;
-          #end
-        }}>{data.content}</textarea>
-        <button onClick={_ -> {
-          save(data);
-          requestClose();
-        }}>Save</button>
-        <button onClick={_ -> requestClose()}>Cancel</button>
+        <ul>
+          <li>
+            <label for="title">Title</label>
+            <input type="text" id="title" value={data.title} onChange={e -> {
+              #if (js && !nodejs)
+                var value = (e.target:js.html.InputElement).value;
+                data.title = value;
+              #end
+            }} />
+          </li>
+          <li>
+            <label for="content">Content</label>
+            <textarea id="content" onChange={e -> {
+              #if (js && !nodejs)
+                var value = (e.target:js.html.TextAreaElement).value;
+                data.content = value;
+              #end
+            }}>{data.content}</textarea>
+          </li>
+          <li>
+            <button onClick={_ -> {
+              save(data);
+              requestClose();
+            }}>Save</button>
+            <button onClick={_ -> requestClose()}>Cancel</button>
+          </li>
+        </ul>
       </div>
     </Modal>
   );
