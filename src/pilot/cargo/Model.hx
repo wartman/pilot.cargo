@@ -2,6 +2,8 @@ package pilot.cargo;
 
 #if !macro
 
+import pilot.Plugin;
+
 @:autoBuild(pilot.cargo.Model.build())
 interface Model {}
 
@@ -108,12 +110,12 @@ class Model {
           if (isConstant || isConstantTarget) {
             props.push(mk(name, t, isOptional));
             newFields = newFields.concat((macro class {
-              @:noCompletion function $getName():$t return _pilot_props.$name;
+              @:noCompletion function $getName():$t return __props.$name;
             }).fields);
           } else {
             props.push(mk(name, macro:tink.state.State<$t>, isOptional));
             newFields = newFields.concat((macro class {
-              @:noCompletion function $getName():$t return _pilot_props.$name.value;
+              @:noCompletion function $getName():$t return __props.$name.value;
             }).fields);
           }
           conFields.push(mk(name, t, isOptional || e != null));
@@ -127,14 +129,14 @@ class Model {
               if (isConstantTarget) {
                 newFields = newFields.concat((macro class {
                   @:noCompletion function $setName(value:$t):$t {
-                    _pilot_props.$name = value;
+                    __props.$name = value;
                     return value; 
                   }
                 }).fields);
               } else {
                 newFields = newFields.concat((macro class {
                   @:noCompletion function $setName(value:$t):$t {
-                    _pilot_props.$name.set(value);
+                    __props.$name.set(value);
                     return value; 
                   }
                 }).fields);
@@ -201,9 +203,9 @@ class Model {
           
           if (isConstantTarget) {
             props.push(mk(name, t, true));
-            lateInitializers.push(macro _pilot_props.$name = ${initializer}());
+            lateInitializers.push(macro __props.$name = ${initializer}());
             newFields = newFields.concat((macro class {
-              @:noCompletion function $getName():$t return _pilot_props.$name;
+              @:noCompletion function $getName():$t return __props.$name;
             }).fields);
           } else {
             props.push(mk(name, macro:tink.state.Observable<$t>, true));
@@ -212,7 +214,7 @@ class Model {
               expr: macro tink.state.Observable.auto(${initializer})
             });
             newFields = newFields.concat((macro class {
-              @:noCompletion function $getName():$t return _pilot_props.$name.value;
+              @:noCompletion function $getName():$t return __props.$name.value;
             }).fields);
           }
         }
@@ -240,7 +242,7 @@ class Model {
           var e = func.expr;
           func.expr = macro {
             var closure:()->$patch = () -> ${e};
-            _pilot_update(closure());
+            __update(closure());
           };
           f.kind = FFun(func);
         }
@@ -266,25 +268,25 @@ class Model {
     for (f in patchFields) {
       var name = f.name;
       if (isConstantTarget) {
-        updates.push(macro if (delta.$name != null) _pilot_props.$name = delta.$name);
+        updates.push(macro if (delta.$name != null) __props.$name = delta.$name);
       } else {
-        updates.push(macro if (delta.$name != null) _pilot_props.$name.set(delta.$name));
+        updates.push(macro if (delta.$name != null) __props.$name.set(delta.$name));
       }
     }
 
     newFields = newFields.concat((macro class {
 
-      var _pilot_props:$propsVar;
+      var __props:$propsVar;
 
       public function new(props:$conArg) {
-        _pilot_props = ${ {
+        __props = ${ {
           expr: EObjectDecl(initializers),
           pos: cls.pos
         } };
         $b{lateInitializers};
       }
 
-      @:noCompletion function _pilot_update(delta:$patch) {
+      @:noCompletion function __update(delta:$patch) {
         var sparse = new haxe.DynamicAccess<pilot.cargo.Ref<Any>>();
         var delta:haxe.DynamicAccess<Any> = cast delta;
         
@@ -314,7 +316,7 @@ class Model {
       //   var props:$patch = cast {};
       //   $b{[ for (prop in patchFields) {
       //     var name = prop.name;
-      //     macro props.$name = _pilot_props.$name.value;
+      //     macro props.$name = __props.$name.value;
       //   } ]}
       //   return props;
       // }

@@ -11,7 +11,8 @@ class TaskEditor extends Component {
   @:attribute var requestClose:()->Void;
   var data:{title:String, content:String};
 
-  @:init function setup() {
+  @:init 
+  function setup() {
     data = {
       title: title,
       content: content
@@ -21,13 +22,13 @@ class TaskEditor extends Component {
   override function render() return html(
     <Modal
       requestClose={requestClose}
-      overlayStyle@style={
+      overlayStyle={css('
         background: rgba(0, 0, 0, 0.4);
-      }
-      modalStyle@style={
+      ')}
+      modalStyle={css('
         background: #ffffff;
         width: 70%;
-      }
+      ')}
     >
       <div>
         <input type="text" id="title" value={data.title} onChange={e -> {

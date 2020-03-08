@@ -1,5 +1,5 @@
 -cp src
-# -cp test
+-cp test
 -cp example
 
 -lib pilot
@@ -11,12 +11,12 @@
 -D debug
 -main TaskApp
 
---each
+# --each
 
 -js dist/assets/app.js
 
---next
+# --next
 
--D pilot-cargo-constant
--D pilot-css-skip
--php dist/php
+# -D pilot-cargo-constant
+# -D pilot-css-skip
+# -php dist/php
