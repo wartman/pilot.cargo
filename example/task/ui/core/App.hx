@@ -25,9 +25,7 @@ class App extends ReactiveComponent {
       onClick={() -> store.addingTask = true}
     >Add task</button>
     <ul>
-      @for (task in store.activeTasks) {
-        <TaskItem task={task} store={store} />;
-      }
+      @for (task in store.activeTasks) <TaskItem task={task} store={store} />
     </ul>
   </>);
 

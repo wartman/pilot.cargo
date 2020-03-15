@@ -2,8 +2,6 @@ package pilot.cargo;
 
 #if !macro
 
-import pilot.Plugin;
-
 @:autoBuild(pilot.cargo.Model.build())
 interface Model {}
 

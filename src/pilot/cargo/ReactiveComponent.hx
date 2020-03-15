@@ -35,12 +35,24 @@ class ReactiveComponent extends Component {
 
       var first = false;
       __link = __observableRender.bind(_ -> {
-        // trace('Updated ${Type.getClassName(Type.getClass(this))}');
         if (first) {
           first = false;
           return null;
         }
-        __requestUpdate({});
+
+        // Todo: not sure if this is helping, or doing much of anything at all.
+        if (parent != null) switch Std.downcast(parent, Component) {
+          case null:
+          case c: if (c.__updating) return null;
+        }
+
+        if (!__updating && __alive && __initialized) {
+          #if debug
+            trace('Updated ${Type.getClassName(Type.getClass(this))}');
+          #end
+          __requestUpdate({});
+        }
+        
         return null;
       });
     }
