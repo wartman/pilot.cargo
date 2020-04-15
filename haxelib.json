@@ -6,6 +6,6 @@
     "tink_state": ""
   },
   "contributors": [ "wartman" ],
-  "releasenote": "Super alpha!",
-  "version": "0.0.1"
+  "releasenote": "Update to pilot 0.3.*",
+  "version": "0.1.0"
 }

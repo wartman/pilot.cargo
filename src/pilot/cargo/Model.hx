@@ -13,6 +13,7 @@ import haxe.macro.Context;
 using Lambda;
 using haxe.macro.Tools;
 
+// Todo: rewrite this with pilot.builder.ClassBuilder
 class Model {
 
   static final propsMeta = [ ':prop', ':property' ];

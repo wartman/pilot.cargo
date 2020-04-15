@@ -1,14 +1,15 @@
 package task.ui.core;
 
-import pilot.cargo.ReactiveComponent;
+import pilot.Component;
+import pilot.Cargo;
 import task.ui.task.*;
 import task.data.*;
 
-class App extends ReactiveComponent {
+class App extends Component {
 
   @:attribute var store:Store;
 
-  override function render() return html(<>
+  override function render() return Cargo.observeHtml(<>
     @if (store.addingTask) <TaskEditor
       requestClose={() -> store.addingTask = false}
       save={data -> {

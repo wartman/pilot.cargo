@@ -1,15 +1,16 @@
 package task.ui.task;
 
-import pilot.cargo.ReactiveComponent;
+import pilot.Component;
+import pilot.cargo.Observed;
 import task.data.*;
 
-class TaskItem extends ReactiveComponent {
+class TaskItem extends Component {
   
   @:attribute var task:Task;
   @:attribute var store:Store;
 
-  override function render() return html(
-    <li>
+  override function render() return Observed.node({
+    wrap: () -> html(<li>
       <h3>{task.title}</h3>
       <p>{task.content}</p>
       <button onClick={ _ -> task.completed = !task.completed }>
@@ -27,7 +28,7 @@ class TaskItem extends ReactiveComponent {
         requestClose={ () -> task.editing = false }
         save={ data -> task.update(data.title, data.content) }
       />
-    </li>
-  );
+    </li>)
+  });
   
 }

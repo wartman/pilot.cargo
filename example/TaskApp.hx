@@ -1,6 +1,8 @@
+import js.Browser;
 import task.data.*;
 import task.ui.core.App;
 import pilot.wings.PortalProvider;
+import pilot.platform.dom.Dom;
 
 using haxe.Json;
 
@@ -17,8 +19,8 @@ class TaskApp {
     trace(store.toJson().stringify(null, '  '));
     trace(Store.fromJson(store.toJson()));
 
-    Pilot.mount(
-      Pilot.document.getElementById('root'),
+    Dom.mount(
+      Browser.document.getElementById('root'),
       Pilot.html(
         // Note: providers don't seem to work well
         //       inside ReactiveComponents. Should work on that.
