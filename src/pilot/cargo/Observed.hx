@@ -1,12 +1,17 @@
 package pilot.cargo;
 
-import tink.state.Observable;
+#if !pilot_cargo_constant
+  import tink.state.Observable;
 
-using tink.CoreApi;
+  using tink.CoreApi;
+#end
 
 final class Observed extends Component {
   
   @:attribute var wrap:()->VNode;
+
+  #if !pilot_cargo_constant
+
   var observableRender:Observable<VNode>;
   var link:CallbackLink;
 
@@ -22,5 +27,13 @@ final class Observed extends Component {
   function removeLink() {
     if (link != null) link.cancel();
   }
+
+  #else
+
+  override function render() {
+    return wrap();
+  }
+
+  #end
 
 }
