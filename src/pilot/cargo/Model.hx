@@ -9,137 +9,146 @@ interface Model {}
 
 import haxe.macro.Expr;
 import haxe.macro.Context;
+import pilot.builder.ClassBuilder;
 
 using Lambda;
 using haxe.macro.Tools;
 
-// Todo: rewrite this with pilot.builder.ClassBuilder
 class Model {
 
-  static final propsMeta = [ ':prop', ':property' ];
-  static final transitionMeta = [ ':transition' ];
-  static final computedMeta = [ ':computed' ];
-  static final optional = { name: ':optional', pos: (macro null).pos };
+  static final PROPS_NAME = '__props';
+  static final INCOMING_PROPS_NAME = '__props';
+  static final OPTIONAL_META = { name: ':optional', pos: (macro null).pos };
+
+  static function mk(name:String, t:ComplexType, isOptional:Bool):Field return {
+    name: name,
+    kind: FVar(t, null),
+    access: [ APublic ],
+    meta: isOptional ? [ OPTIONAL_META ] : [],
+    pos: (macro null).pos
+  };
 
   public static function build() {
     var cls = Context.getLocalClass().get();
-    var typePath:TypePath = { pack: cls.pack, name: cls.name };
-    var isConstantTarget = Context.defined('pilot-cargo-constant');
     var fields = Context.getBuildFields();
+    var typePath:TypePath = { pack: cls.pack, name: cls.name };
+    var builder = new ClassBuilder(fields, cls);
+    var isConstantTarget = Context.defined('pilot-cargo-constant');
     var props:Array<Field> = [];
     var conFields:Array<Field> = [];
     var patchFields:Array<Field> = [];
     var jsonFields:Array<ObjectField> = [];
     var fromJsonFields:Array<ObjectField> = [];
-    var newFields:Array<Field> = [];
     var initializers:Array<ObjectField> = [];
     var lateInitializers:Array<Expr> = [];
+    var updates:Array<Expr> = [];
+    var incoming = macro $i{INCOMING_PROPS_NAME};
 
-    function mk(name:String, t:ComplexType, isOptional:Bool):Field return {
-      name: name,
-      kind: FVar(t, null),
-      access: [ APublic ],
-      meta: isOptional ? [ optional ] : [],
-      pos: (macro null).pos
-    };
-
-    for (f in fields) switch (f.kind) {
-      case FVar(t, e) if (f.meta.exists(m -> propsMeta.has(m.name))):
-        if (t == null) {
-          Context.error('An explicit type is required', f.pos);
-        } else {
-          var meta = f.meta.find(m -> propsMeta.has(m.name));
-          var name = f.name;
-          var mutable = false;
-          var isConstant = false;
-          var isOptional = f.meta.exists(m -> m.name == ':optional');
+    builder.addFieldBuilder({
+      name: ':prop',
+      hook: Normal,
+      similarNames: [
+        ':property', 'prop'
+      ],
+      options: [
+        { name: 'mutable', optional: true },
+        { name: 'constant', optional: true },
+        { name: 'optional', optional: true }
+      ],
+      multiple: false,
+      build: function (options:{
+        mutable:Bool,
+        optional:Bool,
+        constant:Bool
+      }, cls, field) switch field.kind {
+        case FVar(t, e):
+          var name = field.name;
           var getName = 'get_${name}';
-
-          for (p in meta.params) switch p {
-            case (macro mutable) | (macro mutable = true):
-              mutable = true;
-            case macro mutable = false:
-              mutable = false;
-            case (macro constant) | (macro constant = true):
-              isConstant = true;
-            case macro constant = false:
-              isConstant = false;
-            case (macro optional) | (macro optional = true):
-              isOptional = true;
-            case macro optional = false:
-              isOptional = false;
-            default:
-              Context.error('Invalid `@:prop` option', meta.pos);
+          var setName = 'set_${name}';
+          var isConstant = options.constant != null ? options.constant : false;
+          var isOptional = options.optional != null 
+            ? options.optional 
+            : field.meta.exists(m -> m.name == ':optional')
+              ? true
+              : e != null;
+          var isMutable = options.mutable != null ? options.mutable : false;
+          
+          if (isMutable && isConstant) {
+            Context.error('Constant props cannot be mutable', field.pos);
           }
 
-          f.kind = FProp('get', mutable ? 'set' : 'never', t, null);
-          f.access = [ APublic ];
+          field.kind = FProp('get', isMutable ? 'set' : 'never', t, null);
+          field.access = [ APublic ];
+          
+          conFields.push(mk(name, t, isOptional || e != null));
+          if (!isConstant) patchFields.push(mk(name, t, true));
 
           if (isConstant || isConstantTarget) {
+            props.push(mk(name, t, isOptional));
+
+            builder.add((macro class {
+              function $getName():$t return this.$PROPS_NAME.$name;
+            }).fields);
+
+            if (isMutable) {
+              // Note: this will only run for normal props in a
+              //       constant target.
+              builder.add((macro class {
+                function $setName(value) {
+                  this.$PROPS_NAME.$name = value;
+                  return value;
+                }
+              }).fields);
+            }
+
             if (e != null) {
               initializers.push({
                 field: name,
-                expr: macro @:pos(f.pos) props.$name == null ? $e : props.$name,
+                expr: macro @:pos(field.pos) $incoming.$name == null
+                  ? ${e}
+                  : $incoming.$name
               });
             } else {
               initializers.push({
                 field: name,
-                expr: macro props.$name
+                expr: macro @:pos(field.pos) $incoming.$name
               });
             }
           } else {
+            props.push(mk(name, macro:tink.state.State<$t>, isOptional));
+            
+            builder.add((macro class {
+              function $getName():$t return this.$PROPS_NAME.$name.value;
+            }).fields);
+
+            if (isMutable) {
+              builder.add((macro class {
+                function $setName(value) {
+                  this.$PROPS_NAME.$name.set(value);
+                  return value;
+                }
+              }).fields);
+            }
+
             if (e != null) {
               initializers.push({
                 field: name,
-                expr: macro props.$name == null ? new tink.state.State($e) : new tink.state.State(props.$name)
+                expr: macro @:pos(field.pos) $incoming.$name == null
+                  ? new tink.state.State($e)
+                  : new tink.state.State($incoming.$name) 
               });
             } else if (isOptional) {
               initializers.push({
                 field: name,
-                expr: macro props.$name == null ? new tink.state.State(null) : new tink.state.State(props.$name)
+                expr: macro @:pos(field.pos) $incoming.$name == null
+                  ? new tink.state.State(null)
+                  : new tink.state.State($incoming.$name) 
               });
             } else {
               initializers.push({
                 field: name,
-                expr: macro new tink.state.State(props.$name)
+                expr: macro @:pos(field.pos) new tink.state.State($incoming.$name) 
               });
-            }
-          }
-
-          if (isConstant || isConstantTarget) {
-            props.push(mk(name, t, isOptional));
-            newFields = newFields.concat((macro class {
-              @:noCompletion function $getName():$t return __props.$name;
-            }).fields);
-          } else {
-            props.push(mk(name, macro:tink.state.State<$t>, isOptional));
-            newFields = newFields.concat((macro class {
-              @:noCompletion function $getName():$t return __props.$name.value;
-            }).fields);
-          }
-          conFields.push(mk(name, t, isOptional || e != null));
-          if (!isConstant) patchFields.push(mk(name, t, true));
-
-          if (mutable) {
-            if (isConstant) {
-              Context.error('Constant props cannot be mutable', f.pos);
-            } else {
-              var setName = 'set_${name}';
-              if (isConstantTarget) {
-                newFields = newFields.concat((macro class {
-                  @:noCompletion function $setName(value:$t):$t {
-                    __props.$name = value;
-                    return value; 
-                  }
-                }).fields);
-              } else {
-                newFields = newFields.concat((macro class {
-                  @:noCompletion function $setName(value:$t):$t {
-                    __props.$name.set(value);
-                    return value; 
-                  }
-                }).fields);
-              }
             }
           }
 
@@ -155,8 +164,8 @@ class Model {
               });
               fromJsonFields.push({
                 field: name,
-                expr: macro props.$name != null
-                  ? (props.$name:Array<Dynamic>).map(props -> $p{path}.fromJson(props))
+                expr: macro $incoming.$name != null
+                  ? ($incoming.$name:Array<Dynamic>).map($INCOMING_PROPS_NAME -> $p{path}.fromJson($incoming))
                   : null
               });
             case t if (t.toType().unify(Context.getType('pilot.cargo.Model'))):
@@ -170,8 +179,8 @@ class Model {
               });
               fromJsonFields.push({
                 field: name,
-                expr: macro props.$name != null
-                  ? $p{path}.fromJson(props.$name)
+                expr: macro $incoming.$name != null
+                  ? $p{path}.fromJson($incoming.$name)
                   : null
               });
             default:
@@ -181,61 +190,97 @@ class Model {
               });
               fromJsonFields.push({
                 field: name,
-                expr: macro props.$name
+                expr: macro $incoming.$name
               });
           }
-        }
-      
-      case FVar(t, e) if (f.meta.exists(m -> computedMeta.has(m.name))):
-        if (t == null) {
-          Context.error('An explicit type is required', f.pos);
-        } else if (e == null) {
-          Context.error('An expression is required here', f.pos);
-        } else {
-          f.kind = FProp('get', 'never', t, null);
-          f.access = [ APublic ];
 
-          var name = f.name;
-          var meta = f.meta.find(m -> computedMeta.has(m.name));
+        default:
+          Context.error('@:prop can only be used on vars', field.pos);
+      }
+    });
+
+    builder.addFieldBuilder({
+      name: ':computed',
+      hook: After,
+      similarNames: [ ":compted" ],
+      options: [],
+      multiple: false,
+      build: function (options:{}, cls, field) switch field.kind {
+        case FVar(t, e):
+          if (t == null) {
+            Context.error('An explicit type is required', field.pos);
+          } else if (e == null) {
+            Context.error('An expression is required here', field.pos);
+          }
+
+          field.kind = FProp('get', 'never', t, null);
+          field.access = [ APublic ];
+
+          var name = field.name;
           var getName = 'get_${name}';
-          var initializer = macro @:pos(e.pos) function ():$t return ${e};
-          
+          var initializer = macro @:pos(e.pos) function ():$t return $e;
+
           if (isConstantTarget) {
             props.push(mk(name, t, true));
-            lateInitializers.push(macro __props.$name = ${initializer}());
-            newFields = newFields.concat((macro class {
-              @:noCompletion function $getName():$t return __props.$name;
+            var cacheName = '__cache_${name}';
+            builder.add((macro class {
+              @:noCompletion var $cacheName:$t = null;
+              function $getName():$t {
+                if (this.$cacheName == null) {
+                  this.$cacheName = ${e};
+                }
+                return this.$cacheName;
+              }
             }).fields);
+            updates.push(macro this.$cacheName = null);
           } else {
             props.push(mk(name, macro:tink.state.Observable<$t>, true));
             initializers.push({
               field: name,
               expr: macro tink.state.Observable.auto(${initializer})
             });
-            newFields = newFields.concat((macro class {
-              @:noCompletion function $getName():$t return __props.$name.value;
+            builder.add((macro class {
+              function $getName():$t return this.$PROPS_NAME.$name.value;
             }).fields);
           }
-        }
-        
-      case FFun(func):
-        
-        if (f.meta.exists(m -> m.name == ':init')) {
-          var name = f.name;
+
+        default:
+          Context.error('@:computed can only be used on vars', field.pos);
+      }
+    });
+
+    builder.addFieldBuilder({
+      name: ':init',
+      hook: After,
+      similarNames: [
+        'init', ':initializer'
+      ],
+      options: [],
+      multiple: false,
+      build: function (options:{}, cls, field) switch field.kind {
+        case FFun(func):
+          var name = field.name;
           lateInitializers.push(macro this.$name());
-        }
+        default:
+          Context.error('@:init can only be used on methods', field.pos);
+      }
+    });
+    
+    builder.addFieldBuilder({
+      name: ':transition',
+      hook: After,
+      similarNames: [
+        'transition', ':transtion'
+      ],
+      options: [],
+      multiple: false,
+      build: function (options:{}, cls, field) switch field.kind {
+        case FFun(func):
+          var patch = TAnonymous(patchFields);
+          var name = field.name;
 
-      default:
-    }
-
-    var patch = TAnonymous(patchFields);
-
-    for (f in fields) switch (f.kind) {
-      case FFun(func):
-        if (f.meta.exists(m -> transitionMeta.has(m.name))) {
-          var name = f.name;
           if (func.ret != null) {
-            Context.error('Do not manually set a return type for transitions', f.pos);
+            Context.error('Do not manually set a return type for transitions', field.pos);
           }
           func.ret = macro:Void;
           var e = func.expr;
@@ -243,15 +288,20 @@ class Model {
             var closure:()->$patch = () -> ${e};
             __update(closure());
           };
-          f.kind = FFun(func);
-        }
-      default:
-    }
 
+          field.kind = FFun(func);
+        default:
+          Context.error('@:transition can only be used on methods', field.pos);
+      }
+    });
+
+    builder.run();
+
+    var patch = TAnonymous(patchFields);
     var propsVar = TAnonymous(props);
     var conArg = TAnonymous(conFields);
     var sparse = TAnonymous([ for (f in patchFields) {
-      meta: [ optional ],
+      meta: [ OPTIONAL_META ],
       name: f.name,
       pos: f.pos,
       kind: FVar(
@@ -262,30 +312,29 @@ class Model {
         }
       )
     } ]);
-    
-    var updates:Array<Expr> = [];
+
     for (f in patchFields) {
       var name = f.name;
       if (isConstantTarget) {
-        updates.push(macro if (delta.$name != null) __props.$name = delta.$name);
+        updates.push(macro if (delta.$name != null) this.$PROPS_NAME.$name = delta.$name);
       } else {
-        updates.push(macro if (delta.$name != null) __props.$name.set(delta.$name));
+        updates.push(macro if (delta.$name != null) this.$PROPS_NAME.$name.set(delta.$name));
       }
     }
 
-    newFields = newFields.concat((macro class {
+    builder.add((macro class {
 
-      var __props:$propsVar;
+      var $PROPS_NAME:$propsVar;
 
-      public function new(props:$conArg) {
-        __props = ${ {
+      public function new($INCOMING_PROPS_NAME:$conArg) {
+        this.$PROPS_NAME = ${ {
           expr: EObjectDecl(initializers),
           pos: cls.pos
         } };
         $b{lateInitializers};
       }
 
-      @:noCompletion function __update(delta:$patch) {
+      function __update(delta:$patch) {
         var sparse = new haxe.DynamicAccess<pilot.cargo.Ref<Any>>();
         var delta:haxe.DynamicAccess<Any> = cast delta;
         
@@ -304,25 +353,16 @@ class Model {
         } };
       }
 
-      public static function fromJson(props:Dynamic) {
+      public static function fromJson($INCOMING_PROPS_NAME:Dynamic) {
         return new $typePath(${ {
           expr: EObjectDecl(fromJsonFields),
           pos: cls.pos
         } });
       }
 
-      // public function toObject():$patch {
-      //   var props:$patch = cast {};
-      //   $b{[ for (prop in patchFields) {
-      //     var name = prop.name;
-      //     macro props.$name = __props.$name.value;
-      //   } ]}
-      //   return props;
-      // }
-
     }).fields);
 
-    return fields.concat(newFields);
+    return builder.export();
   }
 
 }

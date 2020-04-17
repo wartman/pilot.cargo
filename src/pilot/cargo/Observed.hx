@@ -12,27 +12,29 @@ final class Observed extends Component {
 
   #if !pilot_cargo_constant
 
-  var observableRender:Observable<VNode>;
-  var link:CallbackLink;
+    var observableRender:Observable<VNode>;
+    var link:CallbackLink;
 
-  override function render() {
-    if (observableRender == null) {
+    @:init
+    public function setupObservableRender() {
       observableRender = Observable.auto(wrap);
       link = observableRender.bind(_ -> __requestUpdate());
     }
-    return observableRender.value;
-  }
 
-  @:dispose
-  function removeLink() {
-    if (link != null) link.cancel();
-  }
+    @:dispose
+    function removeLink() {
+      if (link != null) link.cancel();
+    }
+
+    override function render() {
+      return observableRender.value;
+    }
 
   #else
 
-  override function render() {
-    return wrap();
-  }
+    override function render() {
+      return wrap();
+    }
 
   #end
 
